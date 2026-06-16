@@ -299,7 +299,7 @@ interface StockState {
   getStockByTicker: (ticker: string) => StockData | undefined;
 }
 
-export const useStockStore = create<StockState>((set, get) => ({
+export const useStockStore = create<StockState>((_set, _get) => ({
   stocks,
   themes,
   getStocksByTheme: (theme) => stocks.filter((s) => s.theme === theme),

@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Bot, ArrowRight } from 'lucide-react';
 import { useT } from '@/i18n';
-import { themes, stocks, useStockStore } from '@/store/stockStore';
+import { themes, useStockStore } from '@/store/stockStore';
 import { ThemeCard } from '@/components/ThemeCard';
 import { StockPriceCard } from '@/components/StockPriceCard';
 
