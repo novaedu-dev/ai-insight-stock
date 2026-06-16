@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Shield } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import type { StockData } from '@/store/stockStore';
 import { useT } from '@/i18n';
 

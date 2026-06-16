@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Search, Menu, X } from 'lucide-react';
 import { useT } from '@/i18n';
 import { LanguageToggle } from './LanguageToggle';
