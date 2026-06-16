@@ -82,7 +82,10 @@ export function ThemeCard({ theme, index = 0 }: ThemeCardProps) {
                 className="rounded-lg p-2.5"
                 style={{ backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
               >
-                <div className="font-mono text-[11px] font-medium uppercase text-[#64748b] mb-1">
+                <div className="text-[11px] font-semibold text-[#94a3b8] truncate mb-0.5">
+                  {lang === 'KO' ? stock.nameKo : stock.nameEn}
+                </div>
+                <div className="font-mono text-[10px] font-medium uppercase text-[#64748b] mb-1">
                   {stock.ticker}
                 </div>
                 <div className="font-mono text-[13px] font-semibold text-[#f1f5f9] truncate">

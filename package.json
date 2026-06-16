@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "start": "tsx server.ts",
+    "serve": "tsx server.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -65,6 +67,12 @@
     "yahoo-finance2": "^3.15.3",
     "zod": "^4.3.5",
     "zustand": "^5.0.14"
+  },
+  "optionalDependencies": {
+    "tsx": "^4.19.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import type { StockData } from '@/store/stockStore';
 import { useT } from '@/i18n';
+import { fetchStockPrice } from '@/hooks/useStockPrice';
 
 interface StockPriceCardProps {
   stock: StockData;
@@ -13,19 +15,45 @@ export function StockPriceCard({ stock, index = 0 }: StockPriceCardProps) {
   const navigate = useNavigate();
   const { t, lang } = useT();
 
-  const change = stock.currentPrice - stock.previousClose;
-  const changePercent = (change / stock.previousClose) * 100;
+  // 실시간 상태
+  const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [livePrev, setLivePrev] = useState<number | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  // 하드코딩 폴드백
+  const currentPrice = livePrice ?? stock.currentPrice;
+  const previousClose = livePrev ?? stock.previousClose;
+
+  const change = currentPrice - previousClose;
+  const changePercent = (change / previousClose) * 100;
   const isUp = change >= 0;
 
   const isUSD = stock.exchange === 'NASDAQ' || stock.exchange === 'NYSE';
   const currency = isUSD ? '$' : '원';
 
   const formatPrice = (price: number) => {
-    if (isUSD) {
-      return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
+    if (isUSD) return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return price.toLocaleString('ko-KR');
   };
+
+  // 실시간 주가 가져오기
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      const result = await fetchStockPrice(stock.ticker);
+      if (cancelled) return;
+      if (result) {
+        setLivePrice(result.currentPrice);
+        setLivePrev(result.previousClose);
+        setIsConnected(true);
+      }
+    }
+
+    load(); // 최초
+    const timer = setInterval(load, 20000); // 20초마다
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [stock.ticker]);
 
   return (
     <motion.div
@@ -45,29 +73,40 @@ export function StockPriceCard({ stock, index = 0 }: StockPriceCardProps) {
         border: '1px solid rgba(51, 65, 85, 0.4)',
       }}
     >
-      {/* Top: Ticker + Exchange */}
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-mono text-[13px] font-medium tracking-tight text-[#64748b] uppercase">
-          {stock.ticker}
+      {/* Top: Company Name + Exchange + Live badge */}
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-base font-bold text-[#f1f5f9] truncate leading-tight">
+          {lang === 'KO' ? stock.nameKo : stock.nameEn}
         </span>
-        <span
-          className="text-[10px] font-medium px-2 py-0.5 rounded"
-          style={{ backgroundColor: '#1e293b', color: '#94a3b8' }}
-        >
-          {stock.exchange}
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+          {isConnected && (
+            <span className="text-[9px] font-bold text-[#10b981] animate-pulse">LIVE</span>
+          )}
+          <span
+            className="text-[10px] font-medium px-2 py-0.5 rounded"
+            style={{ backgroundColor: '#1e293b', color: '#94a3b8' }}
+          >
+            {stock.exchange}
+          </span>
+        </div>
       </div>
 
-      {/* Company Name */}
-      <div className="text-base font-semibold text-[#f1f5f9] mb-3 truncate">
-        {lang === 'KO' ? stock.nameKo : stock.nameEn}
+      {/* Ticker */}
+      <div className="font-mono text-[11px] font-medium tracking-tight text-[#64748b] uppercase mb-2">
+        {stock.ticker}
       </div>
 
       {/* Current Price */}
       <div className="flex items-baseline gap-2 mb-1">
-        <span className="font-mono text-[28px] font-bold leading-none text-[#f1f5f9]">
-          {isUSD ? currency : ''}{formatPrice(stock.currentPrice)}{!isUSD ? currency : ''}
-        </span>
+        <motion.span
+          key={currentPrice}
+          initial={{ scale: 1.05 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="font-mono text-[28px] font-bold leading-none text-[#f1f5f9]"
+        >
+          {isUSD ? currency : ''}{formatPrice(currentPrice)}{!isUSD ? currency : ''}
+        </motion.span>
       </div>
 
       {/* Change % */}

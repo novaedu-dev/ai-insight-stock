@@ -5,22 +5,40 @@ import { useT } from '@/i18n';
 import { themes, useStockStore } from '@/store/stockStore';
 import { ThemeCard } from '@/components/ThemeCard';
 import { StockPriceCard } from '@/components/StockPriceCard';
+import { useMarketIndices } from '@/hooks/useMarketIndices';
 
 export function Dashboard() {
   const { t, lang } = useT();
   const navigate = useNavigate();
   const { stocks: allStocks } = useStockStore();
+  const marketIndices = useMarketIndices(30000);
 
-  // Get featured stocks
+  // Get featured stocks (updated tickers)
   const featuredStocks = allStocks.filter((s) =>
-    ['KEnSol', 'GST', '267260.KS', '208050.KS', '005380.KS', 'RBOT', 'IONQ', 'LLY'].includes(s.ticker)
+    ['178320.KQ', '083450.KQ', '267260.KS', '208050.KQ', '005380.KS', '078340.KQ', 'IONQ', 'LLY'].includes(s.ticker)
   );
 
-  // Market indices
+  // Market indices (실시간 데이터 우선)
+  const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const indices = [
-    { name: 'KOSPI', value: '2,847.3', change: '+0.4%', isUp: true },
-    { name: 'NASDAQ', value: '17,234.1', change: '-0.2%', isUp: false },
-    { name: 'S&P500', value: '5,432.7', change: '+0.1%', isUp: true },
+    {
+      name: 'KOSPI',
+      value: marketIndices.kospi ? fmt(marketIndices.kospi.price) : '2,847.3',
+      change: marketIndices.kospi ? `${marketIndices.kospi.change >= 0 ? '+' : ''}${marketIndices.kospi.changePercent.toFixed(1)}%` : '+0.4%',
+      isUp: marketIndices.kospi ? marketIndices.kospi.change >= 0 : true,
+    },
+    {
+      name: 'NASDAQ',
+      value: marketIndices.nasdaq ? fmt(marketIndices.nasdaq.price) : '17,234.1',
+      change: marketIndices.nasdaq ? `${marketIndices.nasdaq.change >= 0 ? '+' : ''}${marketIndices.nasdaq.changePercent.toFixed(1)}%` : '-0.2%',
+      isUp: marketIndices.nasdaq ? marketIndices.nasdaq.change >= 0 : false,
+    },
+    {
+      name: 'S&P500',
+      value: marketIndices.sp500 ? fmt(marketIndices.sp500.price) : '5,432.7',
+      change: marketIndices.sp500 ? `${marketIndices.sp500.change >= 0 ? '+' : ''}${marketIndices.sp500.changePercent.toFixed(1)}%` : '+0.1%',
+      isUp: marketIndices.sp500 ? marketIndices.sp500.change >= 0 : true,
+    },
   ];
 
   // Hero title characters for animation

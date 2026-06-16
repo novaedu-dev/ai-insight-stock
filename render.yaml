@@ -1,0 +1,19 @@
+# AI Insight Stock Dashboard — Render.com Blueprint
+# Usage: Import this repo into Render.com → Auto-deploys everything
+
+services:
+  - type: web
+    name: ai-insight-stock
+    runtime: node
+    region: singapore  # closest to Korea (lowest latency)
+    plan: free         # or: starter ($7/mo) for always-on
+    buildCommand: npm install && npm run build
+    startCommand: npx tsx server.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: GEMINI_API_KEY
+        sync: false    # set manually in Render dashboard
+    healthCheckPath: /api/health
