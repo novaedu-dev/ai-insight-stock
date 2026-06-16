@@ -5,6 +5,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { ThemeAnalysis } from '@/pages/ThemeAnalysis';
 import { StockDetail } from '@/pages/StockDetail';
 import { AIAgent } from '@/pages/AIAgent';
+import MarketOverview from '@/pages/MarketOverview';
 
 function AppRoutes() {
   return (
@@ -14,7 +15,7 @@ function AppRoutes() {
         <Route path="/themes" element={<ThemeAnalysis />} />
         <Route path="/stock/:ticker" element={<StockDetail />} />
         <Route path="/ai-agent" element={<AIAgent />} />
-        <Route path="/market" element={<ThemeAnalysis />} />
+        <Route path="/market" element={<MarketOverview />} />
         <Route path="/settings" element={<ThemeAnalysis />} />
       </Routes>
     </AnimatePresence>
