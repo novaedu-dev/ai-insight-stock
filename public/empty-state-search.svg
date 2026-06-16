@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none">
+  <rect width="200" height="160" fill="#0f172a" rx="12"/>
+  <!-- Chart line -->
+  <polyline points="30,110 60,85 90,95 120,60 150,70 180,45" 
+    stroke="#334155" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Chart area fill -->
+  <polygon points="30,110 60,85 90,95 120,60 150,70 180,45 180,130 30,130" 
+    fill="#1e293b" opacity="0.5"/>
+  <!-- Magnifying glass -->
+  <circle cx="125" cy="55" r="28" stroke="#475569" stroke-width="4" fill="none"/>
+  <line x1="145" y1="75" x2="170" y2="100" stroke="#475569" stroke-width="4" stroke-linecap="round"/>
+  <!-- Crosshair -->
+  <line x1="125" y1="42" x2="125" y2="68" stroke="#475569" stroke-width="1.5" opacity="0.5"/>
+  <line x1="112" y1="55" x2="138" y2="55" stroke="#475569" stroke-width="1.5" opacity="0.5"/>
+</svg>
