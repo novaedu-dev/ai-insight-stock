@@ -9,12 +9,7 @@ import {
   Download,
   TrendingUp,
   TrendingDown,
-  Zap,
-  AlertTriangle,
-  Shield,
   ChevronRight,
-  BarChart3,
-  FileText,
 } from 'lucide-react';
 import { useT } from '@/i18n';
 import type { ThemeKey } from '@/store/stockStore';
@@ -30,12 +25,7 @@ const springTransition = {
 const easeOut = [0.25, 0.46, 0.45, 0.94] as [number, number, number, number];
 
 /* ─────────────────────── icon map ─────────────────────── */
-const themeIcons: Record<ThemeKey, typeof Flame> = {
-  power: Flame,
-  robotics: Cpu,
-  quantum: Atom,
-  bio: Dna,
-};
+// Theme icons used inline in the theme selector
 
 /* ─────────────────────── i18n content ─────────────────────── */
 const themeContent: Record<ThemeKey, {
@@ -229,7 +219,6 @@ function generateVIPReport(theme: ThemeKey, lang: 'KO' | 'EN'): string {
   const tf = (ko: string, en: string) => (isKo ? ko : en);
 
   const risk = content.risk;
-  const riskInfo = riskLabels[risk.level];
 
   const stockRows = themeStocks.map((s) => {
     const override = stockDisplayData[s.ticker];
@@ -635,7 +624,6 @@ function MarketInsightPanel({ content, isKo, tf }: { content: typeof themeConten
 /* ── Risk Assessment Panel ── */
 function RiskPanel({ content, isKo, tf }: { content: typeof themeContent.power; isKo: boolean; tf: (ko: string, en: string) => string }) {
   const risk = content.risk;
-  const riskInfo = riskLabels[risk.level];
 
   return (
     <motion.div
