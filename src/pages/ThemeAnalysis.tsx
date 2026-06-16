@@ -506,7 +506,6 @@ export default function ThemeAnalysis() {
 
                 {/* Stock Grid */}
                 <StockGridSection
-                  theme={activeTheme}
                   themeStocks={themeStocks}
                   isKo={isKo}
                   tf={tf}
@@ -519,7 +518,7 @@ export default function ThemeAnalysis() {
       </div>
 
       {/* ── VIP Report Download Bar ── */}
-      <VIPDownloadBar onDownload={handleDownload} isKo={isKo} tf={tf} />
+      <VIPDownloadBar onDownload={handleDownload} tf={tf} />
     </div>
   );
 }
@@ -744,13 +743,11 @@ function ActionPanel({ content, isKo, tf }: { content: typeof themeContent.power
 
 /* ── Stock Grid Section ── */
 function StockGridSection({
-  theme,
   themeStocks,
   isKo,
   tf,
   onStockClick,
 }: {
-  theme: ThemeKey;
   themeStocks: ReturnType<ReturnType<typeof useStockStore.getState>['getStocksByTheme']>;
   isKo: boolean;
   tf: (ko: string, en: string) => string;
@@ -940,7 +937,7 @@ function ThemeStockCard({
 }
 
 /* ── VIP Download Bar ── */
-function VIPDownloadBar({ onDownload, isKo, tf }: { onDownload: () => void; isKo: boolean; tf: (ko: string, en: string) => string }) {
+function VIPDownloadBar({ onDownload, tf }: { onDownload: () => void; tf: (ko: string, en: string) => string }) {
   return (
     <motion.div
       initial={{ y: '100%' }}
