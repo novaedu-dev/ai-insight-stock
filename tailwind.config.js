@@ -48,6 +48,26 @@ module.exports = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Cosmic Slate Design Tokens
+        cosmic: {
+          bg: '#020617',
+          surface: '#0f172a',
+          'surface-elevated': '#1e293b',
+          border: '#334155',
+          'border-dim': '#1e293b',
+        },
+        'text-primary': '#f1f5f9',
+        'text-secondary': '#94a3b8',
+        'text-muted': '#64748b',
+        'accent-emerald': '#10b981',
+        'accent-cyan': '#06b6d4',
+        'accent-indigo': '#6366f1',
+        'accent-rose': '#f43f5e',
+        'accent-amber': '#f59e0b',
+      },
+      fontFamily: {
+        sans: ['Inter', 'Pretendard', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
       borderRadius: {
         xl: "calc(var(--radius) + 4px)",
@@ -58,6 +78,8 @@ module.exports = {
       },
       boxShadow: {
         xs: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        glow: '0 0 20px rgba(99,102,241,0.08)',
+        'glow-lg': '0 8px 32px rgba(99,102,241,0.1)',
       },
       keyframes: {
         "accordion-down": {
@@ -72,11 +94,21 @@ module.exports = {
           "0%,70%,100%": { opacity: "1" },
           "20%,50%": { opacity: "0" },
         },
+        "pulse-dot": {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(1.4)", opacity: "0.7" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "caret-blink": "caret-blink 1.25s ease-out infinite",
+        "pulse-dot": "pulse-dot 2s ease-in-out infinite",
+        "shimmer": "shimmer 3s ease-in-out infinite",
       },
     },
   },
