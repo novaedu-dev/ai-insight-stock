@@ -69,9 +69,9 @@ const STOCKS: StockInfo[] = [
     beginnerFriendly: false, dividendYield: 2.2, policyDrivers: ['K-모빌리티 수출 확대', '로보틱스 산업 육성', '자율주행 상용화 로드맵'],
   },
   {
-    ticker: '078340', yahooTicker: '078340.KQ', nameKo: '레인보우로보틱스', nameEn: 'Rainbow Robotics',
+    ticker: '277810', yahooTicker: '277810.KQ', nameKo: '레인보우로보틱스', nameEn: 'Rainbow Robotics',
     theme: '온디바이스AI·로봇·모빌리티', sector: '협동로봇/방위', exchange: 'KOSDAQ',
-    googleUrl: 'https://www.google.com/finance/quote/078340:KOSDAQ',
+    googleUrl: 'https://www.google.com/finance/quote/277810:KOSDAQ',
     beginnerFriendly: false, policyDrivers: ['K-로봇 종합발전계획', '방위산업 수출 지원', '스마트제조혁신 사업'],
   },
   {
