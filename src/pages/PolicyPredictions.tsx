@@ -40,7 +40,7 @@ const itemVariants = {
 
 export function PolicyPredictions() {
   const navigate = useNavigate();
-  const { predictions, loading } = usePolicyPredictions();
+  const { predictions, loading, error } = usePolicyPredictions();
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
   /* Group by year */
@@ -70,6 +70,29 @@ export function PolicyPredictions() {
           연도별 정부정책 발표와 관련 메가테마 종목을 미리 분석합니다. 예상 시행 시점과 영향도를 확인하세요.
         </p>
       </motion.div>
+
+      {/* Loading */}
+      {loading && (
+        <motion.div variants={itemVariants} className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent mb-3" />
+          <p className="text-slate-400 text-sm">정책 데이터를 불러오는 중...</p>
+        </motion.div>
+      )}
+
+      {/* Error */}
+      {error && !loading && (
+        <motion.div variants={itemVariants} className="rounded-xl p-6 mb-6" style={{ backgroundColor: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)' }}>
+          <p className="text-red-400 text-sm font-medium">{error}</p>
+          <p className="text-slate-500 text-xs mt-1">페이지를 새로고침해 보세요.</p>
+        </motion.div>
+      )}
+
+      {/* Empty */}
+      {!loading && !error && predictions.length === 0 && (
+        <motion.div variants={itemVariants} className="text-center py-12">
+          <p className="text-slate-400 text-sm">정책 데이터가 없습니다.</p>
+        </motion.div>
+      )}
 
       {/* Year Filter */}
       <motion.div variants={itemVariants} className="flex flex-wrap gap-2 mb-6">
