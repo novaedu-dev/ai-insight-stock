@@ -5,7 +5,6 @@ import {
   TrendingUp,
   TrendingDown,
   ExternalLink,
-  Flame,
   ArrowUpDown,
   BarChart3,
   Activity,

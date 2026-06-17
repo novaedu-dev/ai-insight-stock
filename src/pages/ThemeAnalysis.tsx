@@ -8,7 +8,6 @@ import {
   HeartPulse,
   ChevronDown,
   ChevronUp,
-  ArrowUpDown,
   ExternalLink,
   Layers,
 } from 'lucide-react';

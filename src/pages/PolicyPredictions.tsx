@@ -7,7 +7,6 @@ import {
   Target,
   Layers,
   ChevronRight,
-  TrendingUp,
   Shield,
   Lightbulb,
 } from 'lucide-react';
