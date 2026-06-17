@@ -1,34 +1,32 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   BookOpen,
-  Send,
-  Sparkles,
-  TrendingUp,
-  Cpu,
-  Zap,
-  Dna,
-  User,
-  Loader2,
+  Calendar,
+  Target,
+  Layers,
+  ChevronRight,
+  Shield,
+  Lightbulb,
 } from 'lucide-react';
+import { usePolicyPredictions } from '@/api/stockApi';
 
 const CARD_BG = 'rgba(15,23,42,0.6)';
 const CARD_BORDER = 'rgba(51,65,85,0.4)';
 
-const PRESET_QUESTIONS = [
-  { icon: Cpu, label: 'K-반도체 수혜주', query: '2025년 K-반도체 특화단지 정책의 주식 수혜 종목과 투자 전략을 알려줘.' },
-  { icon: Zap, label: 'AI 전력 인프라', query: 'AI 데이터센터 전력 인프라 관련 수혜 종목과 전망을 알려줘.' },
-  { icon: TrendingUp, label: 'K-로봇·모빌리티', query: 'K-로봇 정책의 수혜 종목과 투자 전략을 알려줘.' },
-  { icon: Dna, label: 'K-바이오', query: 'K-바이오 글로벌 확장 정책의 수혜 종목과 전망을 알려줘.' },
-  { icon: Sparkles, label: '양자컴퓨팅', query: 'K-퀀텀 얼라이스 정책의 수혜 종목과 투자 전략을 알려줘.' },
-  { icon: BookOpen, label: '정책 총정리', query: '2025-2027년 한국 정부정책 중 가장 수혜가 큰 종목 3개와 투자 전략을 알려줘.' },
-];
+const IMPACT_CONFIG = {
+  high: { color: '#f87171', bg: 'rgba(248,113,113,0.08)', label: '높음', icon: Target },
+  medium: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', label: '중간', icon: Shield },
+  low: { color: '#60a5fa', bg: 'rgba(96,165,250,0.08)', label: '낮음', icon: Shield },
+};
 
-interface ChatMessage {
-  role: 'user' | 'ai';
-  text: string;
-  timestamp: number;
-}
+const THEME_ROUTE_MAP: Record<string, string> = {
+  power: '/themes',
+  robotics: '/themes',
+  quantum: '/themes',
+  bio: '/themes',
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -40,402 +38,207 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
-/** 서버 API로 Gemini 호출 */
-async function askGemini(message: string): Promise<string> {
-  try {
-    const res = await fetch('/api/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message }),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error('[Gemini] HTTP', res.status, text.substring(0, 100));
-      return getFallbackResponse(message);
-    }
-
-    const data = await res.json();
-
-    if (data.error) {
-      console.error('[Gemini] API error:', data.error);
-      return getFallbackResponse(message);
-    }
-
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (text) return text;
-
-    return getFallbackResponse(message);
-  } catch (err: any) {
-    console.error('[Gemini] Fetch error:', err.name, err.message);
-    return getFallbackResponse(message);
-  }
-}
-
-/** Gemini API 실패 시 서버 하드코딩 고품질 데이터 폴드백 */
-function getFallbackResponse(query: string): string {
-  // 쿼리 키워드 기반 매칭
-  const q = query.toLowerCase();
-
-  if (q.includes('반도체') || q.includes('특화')) {
-    return `【K-반도체 특화단지 정책 분석】
-
-📌 핵심 정책
-• 용인 반도체 클러스터 622조 투자
-• 반도체 특별법 → 파운드리 R&D 세액공제 25%
-• K-Chips Act 상반기 통과 예고
-
-🎯 TOP3 수혜 종목
-
-1️⃣ 케이엔솔 (053080) ⭐ 최우선
-   현재가: 11,570원  목표가: 18,000원 (+55.6%)
-   섹터: 액침냉각 소재
-   진입: 11,000원대 분할매수  손절: 9,200원
-   트리거: 액침냉각 대형 수주 + 빅테크 인증
-
-2️⃣ 서진시스템 (178320)
-   현재가: 74,400원  목표가: 100,000원 (+34.4%)
-   섹터: 반도체 장비 + ESS
-   진입: 70,000원대  손절: 58,000원
-   트리거: 북미 ESS 공장 가동 + 플루언스 수주
-
-3️⃣ HD현대일렉트릭 (267260)
-   현재가: 344,500원  목표가: 450,000원 (+30.6%)
-   섹터: 초고압 변압기
-   진입: 330,000원대  손절: 310,000원
-   트리거: 미국 변압기 대형 수주 + IRA 수혜
-
-⚠️ 리스크
-• 소형주 변동성 (케이엔솔, 서진)
-• 원/달러 환율 상승 (현대일렉트릭)
-• 미국 보호무역 정책`;
-  }
-
-  if (q.includes('로봇') || q.includes('모빌리티')) {
-    return `【K-로봇·모빌리티 정책 분석】
-
-📌 핵심 정책
-• 로봇 종합발전계획 2026 → R&D 2조 투자
-• 자율주행 L4 상용화 로드맵
-• K-모빌리티 수출 확대 정책
-
-🎯 TOP3 수혜 종목
-
-1️⃣ 현대차 (005380) ⭐ 최우선
-   현재가: 618,000원  목표가: 720,000원 (+16.5%)
-   섹터: 자율주행 + 전기차
-   진입: 600,000원대  손절: 570,000원
-   트리거: Robotaxi 상용화 + 보스턴다이낵스 시너지
-
-2️⃣ 레인보우로보틱스 (277810)
-   현재가: 625,000원  목표가: 850,000원 (+36.0%)
-   섹터: 협동로봇 + 방위
-   진입: 600,000원대  손절: 520,000원
-   트리거: 방위로봇 대형 수주 + K-로봇 정책 지원
-
-3️⃣ 퀄컴 (QCOM)
-   현재가: $198.50  목표가: $240 (+20.9%)
-   섹터: 온디바이스 AI 반도체
-   진입: $195  손절: $180
-   트리거: AI PC 칩 탑재 확대
-
-⚠️ 리스크
-• 자율주행 사고 리스크
-• 방위 수주 불확실성
-• 환율 리스크`;
-  }
-
-  if (q.includes('바이오')) {
-    return `【K-바이오 글로벌 확장 정책 분석】
-
-📌 핵심 정책
-• 바이오 수출 200억달러 목표 (2027)
-• 비만치료제 건강보험 급여 검토
-• CDMO 클러스터 2개 추가
-
-🎯 TOP3 수혜 종목
-
-1️⃣ 삼성바이오로직스 (207940) ⭐ 최우선
-   현재가: 856,000원  목표가: 1,000,000원 (+16.8%)
-   섹터: CDMO 대장주
-   진입: 840,000원대  손절: 780,000원
-   트리거: 대형 CDMO 계약 + 5공장 가동
-
-2️⃣ 일라이릴리 (LLY)
-   현재가: $978.50  목표가: $1,150 (+17.5%)
-   섹터: 비만치료제 (제피바운드)
-   진입: $960  손절: $880
-   트리거: 제피바운드 매출 급증
-
-3️⃣ 노볼노디스크 (NVO)
-   현재가: $78.50  목표가: $98 (+24.8%)
-   섹터: 비만치료제 (위고비)
-   진입: $76  손절: $68
-   트리거: CagriSema 승인 기대
-
-⚠️ 리스크
-• FDA 제재 리스크
-• 미국 의회 약가 압박
-• 원/달러 환율 하락`;
-  }
-
-  if (q.includes('양자') || q.includes('퀀텀')) {
-    return `【K-퀀텀 얼라이스 정책 분석】
-
-📌 핵심 정책
-• 양자컴퓨팅 5개년 R&D 1조 투자
-• 양자암호통신 상용화 (2026)
-• 국방 양통신망 구축
-
-🎯 TOP3 수혜 종목
-
-1️⃣ SK텔레콤 (017670) ⭐ 최우선
-   현재가: 52,300원  목표가: 62,000원 (+18.5%)
-   섹터: 양자암호통신
-   진입: 51,000원대  손절: 48,000원
-   트리거: 양자암호통신 상용화 + AI 데이터센터
-
-2️⃣ IBM (IBM)
-   현재가: $271  목표가: $310 (+14.4%)
-   섹터: 양자컴퓨팅 + 큐러스
-   진입: $268  손절: $250
-   트리거: 양자 상용화 로드맵
-
-3️⃣ 아이온큐 (IONQ)
-   현재가: $56  목표가: $85 (+51.8%)
-   섹터: 순수양자플레이
-   진입: $55  손절: $45
-   트리거: 양자 우위 달성
-
-⚠️ 리스크
-• 이통업 규제 강화
-• 기술적 실패 가능성
-• 현금 소진 리스크 (IONQ)`;
-  }
-
-  if (q.includes('전력') || q.includes('에너지') || q.includes('데이터센터')) {
-    return `【AI 데이터센터 전력 인프라 정책 분석】
-
-📌 핵심 정책
-• AI 데이터센터 전력인프라 확충
-• 재생에너지 3020 정책
-• ESS 의무설치 확대
-
-🎯 TOP3 수혜 종목
-
-1️⃣ HD현대일렉트릭 (267260) ⭐ 최우선
-   현재가: 344,500원  목표가: 450,000원 (+30.6%)
-   섹터: 초고압 변압기
-   진입: 330,000원대  손절: 310,000원
-
-2️⃣ GST (083450)
-   현재가: 58,400원  목표가: 80,000원 (+37.0%)
-   섹터: 전력변환기 + ESS
-   진입: 55,000원대  손절: 50,000원
-
-3️⃣ 서진시스템 (178320)
-   현재가: 74,400원  목표가: 100,000원 (+34.4%)
-   섹터: ESS + 반도체장비
-   진입: 70,000원대  손절: 58,000원
-
-⚠️ 리스크
-• 수주 공백
-• 원자재 가격 상승
-• 환율 변동성`;
-  }
-
-  // 기본 응답 (정책 총정리)
-  return `【2025-2027년 정부정책 기반 주식 투자 전략】
-
-📊 정책별 수혜 종목 요약
-
-🥇 1순위: K-반도체 특화단지 (2025)
-   대장주: 케이엔솔 (053080) - 목표가 18,000원
-   정책: 용인 622조 투자 + 반도체 특별법
-
-🥈 2순위: AI 데이터센터 전력 (2025)
-   대장주: HD현대일렉트릭 (267260) - 목표가 450,000원
-   정책: 전력인프라 확충 + ESS 의무설치
-
-🥉 3순위: K-로봇·모빌리티 (2026)
-   대장주: 현대차 (005380) - 목표가 720,000원
-   정책: 로봇 종합발전계획 + 자율주행 L4
-
-💡 초보자 추천 (하방 리스크 낮음)
-   • GST (083450) - 소형주 중 변동성 낮음
-   • SK텔레콤 (017670) - 배당 3.8% + 양자 수혜
-   • HD현대일렉트릭 (267260) - 대형주 + 배당
-
-⚠️ 공통 리스크
-• 정책 지연 또는 변경
-• 미국 보호무역 정책
-• 환율 변동성
-• 소형주 변동성
-
-자세한 분석은 각 테마별 질문을 선택해 주세요.`;
-}
-
 export function PolicyPredictions() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [hasAutoRun, setHasAutoRun] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const { predictions, loading, error } = usePolicyPredictions();
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  /* Group by year */
+  const yearGroups = predictions.reduce<Record<number, typeof predictions>>((acc, p) => {
+    if (!acc[p.year]) acc[p.year] = [];
+    acc[p.year].push(p);
+    return acc;
+  }, {});
 
-  // 페이지 로드 시 자동 분석
-  useEffect(() => {
-    if (hasAutoRun) return;
-    setHasAutoRun(true);
-    setLoading(true);
-
-    // 먼저 하드코딩 데이터로 즉시 표시
-    const fallback = getFallbackResponse('정책 총정리');
-    setMessages([{ role: 'ai', text: fallback, timestamp: Date.now() }]);
-    setLoading(false);
-
-    // 그 후 Gemini API 시도 (실패하면 그대로 둠)
-    askGemini('2025-2027년 한국 정부정책 중 주식에 가장 큰 영향을 미칠 정책 3개와 수혜 종목, 진입 전략을 간결히 알려줘.').then(text => {
-      if (!text.includes('⚠️')) {
-        // Gemini 성공 → AI 응답으로 교체
-        setMessages([{ role: 'ai', text, timestamp: Date.now() }]);
-      }
-    });
-  }, [hasAutoRun]);
-
-  const handleSend = async (text: string) => {
-    if (!text.trim() || loading) return;
-
-    const userMsg: ChatMessage = { role: 'user', text: text.trim(), timestamp: Date.now() };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setLoading(true);
-
-    const aiText = await askGemini(userMsg.text);
-    const aiMsg: ChatMessage = { role: 'ai', text: aiText, timestamp: Date.now() };
-    setMessages(prev => [...prev, aiMsg]);
-    setLoading(false);
-  };
+  const years = Object.keys(yearGroups).map(Number).sort((a, b) => a - b);
+  const displayYears = selectedYear ? [selectedYear] : years;
 
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="flex flex-col h-[calc(100vh-64px)]"
+      className="px-4 lg:px-6 py-6 max-w-[1400px] mx-auto"
     >
-      {/* 헤더 */}
-      <motion.div variants={itemVariants} className="shrink-0 px-4 lg:px-6 pt-6 pb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <BookOpen size={20} className="text-indigo-400" />
-            <h1 className="text-xl font-bold text-slate-100">정부정책 테마 예측</h1>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium">
-              AI 실시간 분석
-            </span>
-          </div>
+      {/* Header */}
+      <motion.div variants={itemVariants} className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <BookOpen size={20} className="text-indigo-400" />
+          <h1 className="text-xl font-bold text-slate-100">정부정책 테마 예측</h1>
         </div>
         <p className="text-sm text-slate-400">
-          정부정책을 기반으로 시장을 예측하고 주식을 추천합니다. 아래 질문을 선택하거나 직접 입력하세요.
+          연도별 정부정책 발표와 관련 메가테마 종목을 미리 분석합니다. 예상 시행 시점과 영향도를 확인하세요.
         </p>
       </motion.div>
 
-      {/* 프리셋 질문 버튼들 */}
-      {!loading && messages.length <= 1 && (
-        <motion.div variants={itemVariants} className="shrink-0 px-4 lg:px-6 pb-4">
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-            {PRESET_QUESTIONS.map((q, i) => (
-              <button
-                key={i}
-                onClick={() => handleSend(q.query)}
-                disabled={loading}
-                className="flex items-center gap-2 p-3 rounded-xl text-left transition-all duration-200 hover:scale-[1.02] disabled:opacity-50"
-                style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
-              >
-                <q.icon size={16} className="text-indigo-400 shrink-0" />
-                <span className="text-xs text-slate-300 font-medium">{q.label}</span>
-              </button>
-            ))}
-          </div>
+      {/* Loading */}
+      {loading && (
+        <motion.div variants={itemVariants} className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent mb-3" />
+          <p className="text-slate-400 text-sm">정책 데이터를 불러오는 중...</p>
         </motion.div>
       )}
 
-      {/* 채팅 영역 */}
-      <div className="flex-1 overflow-y-auto px-4 lg:px-6 pb-4 space-y-4">
-        {messages.map((msg, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            {msg.role === 'ai' && (
-              <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1" style={{ backgroundColor: 'rgba(99,102,241,0.2)' }}>
-                <Sparkles size={16} className="text-indigo-400" />
-              </div>
-            )}
-            <div
-              className={`max-w-[85%] lg:max-w-[75%] rounded-2xl p-4 ${
-                msg.role === 'user' ? 'bg-indigo-600 text-white' : ''
-              }`}
-              style={msg.role === 'ai' ? { backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}` } : {}}
-            >
-              {msg.role === 'ai' ? (
-                <div className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed font-mono">
-                  {msg.text}
-                </div>
-              ) : (
-                <p className="text-sm">{msg.text}</p>
-              )}
-            </div>
-            {msg.role === 'user' && (
-              <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1" style={{ backgroundColor: 'rgba(16,185,129,0.2)' }}>
-                <User size={16} className="text-emerald-400" />
-              </div>
-            )}
-          </motion.div>
-        ))}
+      {/* Error */}
+      {error && !loading && (
+        <motion.div variants={itemVariants} className="rounded-xl p-6 mb-6" style={{ backgroundColor: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.3)' }}>
+          <p className="text-red-400 text-sm font-medium">{error}</p>
+          <p className="text-slate-500 text-xs mt-1">페이지를 새로고침해 보세요.</p>
+        </motion.div>
+      )}
 
-        {/* 로딩 */}
-        {loading && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(99,102,241,0.2)' }}>
-              <Loader2 size={16} className="text-indigo-400 animate-spin" />
-            </div>
-            <div className="rounded-2xl p-4" style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}` }}>
-              <p className="text-sm text-slate-400">AI가 분석 중... (Gemini API 또는 하드코딩 데이터)</p>
-            </div>
-          </motion.div>
-        )}
+      {/* Empty */}
+      {!loading && !error && predictions.length === 0 && (
+        <motion.div variants={itemVariants} className="text-center py-12">
+          <p className="text-slate-400 text-sm">정책 데이터가 없습니다.</p>
+        </motion.div>
+      )}
 
-        <div ref={bottomRef} />
-      </div>
-
-      {/* 입력창 */}
-      <motion.div variants={itemVariants} className="shrink-0 px-4 lg:px-6 pb-4 pt-2">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend(input)}
-            placeholder="정부정책에 대해 질문하세요..."
-            className="flex-1 px-4 py-3 rounded-xl text-sm text-slate-200 placeholder-slate-500 outline-none focus:ring-2 focus:ring-indigo-500/50"
-            style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
-          />
+      {/* Year Filter */}
+      <motion.div variants={itemVariants} className="flex flex-wrap gap-2 mb-6">
+        <button
+          onClick={() => setSelectedYear(null)}
+          className="text-xs px-4 py-2 rounded-lg transition-all duration-200 font-medium"
+          style={{
+            backgroundColor: selectedYear === null ? 'rgba(99,102,241,0.15)' : CARD_BG,
+            color: selectedYear === null ? '#818cf8' : '#64748b',
+            border: selectedYear === null ? '1px solid rgba(99,102,241,0.3)' : `1px solid ${CARD_BORDER}`,
+          }}
+        >
+          전체
+        </button>
+        {years.map((year) => (
           <button
-            onClick={() => handleSend(input)}
-            disabled={loading || !input.trim()}
-            className="px-4 py-3 rounded-xl transition-all duration-200 disabled:opacity-50"
-            style={{ backgroundColor: loading || !input.trim() ? '#1e293b' : '#6366f1' }}
+            key={year}
+            onClick={() => setSelectedYear(year === selectedYear ? null : year)}
+            className="text-xs px-4 py-2 rounded-lg transition-all duration-200 font-medium"
+            style={{
+              backgroundColor: selectedYear === year ? 'rgba(99,102,241,0.15)' : CARD_BG,
+              color: selectedYear === year ? '#818cf8' : '#64748b',
+              border: selectedYear === year ? '1px solid rgba(99,102,241,0.3)' : `1px solid ${CARD_BORDER}`,
+            }}
           >
-            <Send size={18} className="text-white" />
+            {year}년
           </button>
-        </div>
+        ))}
       </motion.div>
+
+      {/* Loading */}
+      {loading && predictions.length === 0 && (
+        <motion.div variants={itemVariants} className="text-center py-16 text-slate-500 text-sm">
+          정책 데이터 로드 중...
+        </motion.div>
+      )}
+
+      {/* Empty */}
+      {!loading && predictions.length === 0 && (
+        <motion.div
+          variants={itemVariants}
+          className="rounded-xl p-8 text-center"
+          style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
+        >
+          <Lightbulb size={28} className="text-slate-500 mx-auto mb-3" />
+          <div className="text-sm text-slate-400 mb-2">정책 예측 데이터가 준비 중입니다.</div>
+          <div className="text-xs text-slate-500">서버 API 연동 후 자동으로 표시됩니다.</div>
+        </motion.div>
+      )}
+
+      {/* Timeline */}
+      {displayYears.map((year) => (
+        <motion.section key={year} variants={itemVariants} className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Calendar size={16} className="text-indigo-400" />
+            <h2 className="text-base font-bold text-slate-100">{year}년</h2>
+            <span className="text-xs text-slate-500">({yearGroups[year]?.length || 0}개 정책)</span>
+          </div>
+
+          <div className="relative pl-6">
+            {/* Timeline line */}
+            <div className="absolute left-[7px] top-0 bottom-0 w-[2px] rounded-full" style={{ backgroundColor: 'rgba(99,102,241,0.2)' }} />
+
+            <div className="space-y-3">
+              {(yearGroups[year] || []).map((policy) => {
+                const impactCfg = IMPACT_CONFIG[policy.impact] || IMPACT_CONFIG.medium;
+                const ImpactIcon = impactCfg.icon;
+                const themeRoute = THEME_ROUTE_MAP[policy.themeKey] || '/themes';
+
+                return (
+                  <motion.div
+                    key={policy.id}
+                    variants={itemVariants}
+                    className="relative rounded-xl p-4 lg:p-5"
+                    style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}`, backdropFilter: 'blur(8px)' }}
+                  >
+                    {/* Timeline dot */}
+                    <div
+                      className="absolute left-[-21px] top-5 w-3 h-3 rounded-full border-2"
+                      style={{ borderColor: impactCfg.color, backgroundColor: '#0f172a' }}
+                    />
+
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                      <div className="flex-1">
+                        {/* Title row */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-sm font-bold text-slate-100">{policy.policyName}</h3>
+                          <span
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded"
+                            style={{ backgroundColor: impactCfg.bg, color: impactCfg.color }}
+                          >
+                            <ImpactIcon size={10} />
+                            영향도 {impactCfg.label}
+                          </span>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-xs text-slate-400 mb-3 leading-relaxed">{policy.description}</p>
+
+                        {/* Meta info */}
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                          <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                            <Calendar size={11} />
+                            예상 시행: {policy.expectedImplementation}
+                          </span>
+                          <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                            <Layers size={11} />
+                            테마: {policy.theme}
+                          </span>
+                        </div>
+
+                        {/* Related stocks */}
+                        {policy.relatedStocks.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            <span className="text-[10px] text-slate-500 mr-1">관련종목:</span>
+                            {policy.relatedStocks.map((ticker) => (
+                              <button
+                                key={ticker}
+                                onClick={() => navigate(`/stock/${encodeURIComponent(ticker)}`)}
+                                className="text-[11px] font-mono px-2 py-0.5 rounded transition-colors hover:bg-slate-700/50"
+                                style={{ backgroundColor: 'rgba(51,65,85,0.3)', color: '#94a3b8' }}
+                              >
+                                {ticker}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action */}
+                      <button
+                        onClick={() => navigate(themeRoute)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-medium transition-all duration-200 hover:opacity-90 whitespace-nowrap"
+                        style={{ backgroundColor: 'rgba(99,102,241,0.1)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.2)' }}
+                      >
+                        이 테마의 종목 보기
+                        <ChevronRight size={12} />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.section>
+      ))}
     </motion.div>
   );
 }
