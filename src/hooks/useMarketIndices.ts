@@ -13,11 +13,21 @@ interface MarketIndices {
   sp500: MarketIndex | null;
 }
 
+/** 10초 타임아웃 fetch */
+async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function fetchFromServer(): Promise<MarketIndices | null> {
   try {
-    const res = await fetch('/api/market/indices', {
-      signal: AbortSignal.timeout(10000),
-    });
+    const res = await fetchWithTimeout('/api/market/indices');
     if (!res.ok) return null;
     return await res.json();
   } catch {

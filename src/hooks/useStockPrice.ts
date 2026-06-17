@@ -11,19 +11,35 @@ export interface LiveStockData {
   timestamp: string;
 }
 
-// Render 서버의 API 사용 (CORS 제약 없음)
+// Render 서버 API 사용
 const API_BASE = '/api';
+
+/** 10초 타임아웃 fetch */
+async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /** 서버 API로 실시간 주가 조회 */
 export async function fetchStockPrice(ticker: string): Promise<LiveStockData | null> {
   try {
-    const res = await fetch(`${API_BASE}/stock/${encodeURIComponent(ticker)}`, {
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!res.ok) return null;
+    const res = await fetchWithTimeout(`${API_BASE}/stock/${encodeURIComponent(ticker)}`);
+    if (!res.ok) {
+      console.warn(`[StockPrice] HTTP ${res.status} for ${ticker}`);
+      return null;
+    }
 
     const data = await res.json();
-    if (data.error || !data.currentPrice) return null;
+    if (data.error || !data.currentPrice) {
+      console.warn(`[StockPrice] No data for ${ticker}:`, data.error);
+      return null;
+    }
 
     return {
       ticker: data.ticker,
@@ -35,13 +51,14 @@ export async function fetchStockPrice(ticker: string): Promise<LiveStockData | n
       currency: data.currency || 'KRW',
       timestamp: data.timestamp,
     };
-  } catch {
+  } catch (err: any) {
+    console.warn(`[StockPrice] Fetch failed for ${ticker}:`, err.name);
     return null;
   }
 }
 
-/** 훅: 단일 종목 실시간 주가 */
-export function useLiveStockPrice(ticker: string, intervalMs = 15000) {
+/** 훅: 단일 종목 실시간 주가 (20초 갱신) */
+export function useLiveStockPrice(ticker: string, intervalMs = 20000) {
   const [live, setLive] = useState<LiveStockData | null>(null);
   const [isLive, setIsLive] = useState(false);
 
