@@ -10,6 +10,7 @@ export const translations = {
     'nav.aiAgent': 'AI 에이전트',
     'nav.stockDeepDive': '종목 분석',
     'nav.marketOverview': '시장 개요',
+    'nav.policy': '정부정책 테마 예측',
     'nav.settings': '설정',
 
     // Hero
@@ -93,6 +94,7 @@ export const translations = {
     'nav.aiAgent': 'AI Agent',
     'nav.stockDeepDive': 'Stock Deep Dive',
     'nav.marketOverview': 'Market Overview',
+    'nav.policy': 'Policy Theme Predictions',
     'nav.settings': 'Settings',
 
     // Hero
