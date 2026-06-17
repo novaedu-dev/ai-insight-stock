@@ -228,8 +228,8 @@ app.post('/api/gemini', async (req, res) => {
 // 빌드된 프론트엔드 파일 서빙
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// SPA: 모든 경로를 index.html로 리다이렉트
-app.get('*', (_req, res) => {
+// SPA: 모든 경로를 index.html로 리다이렉트 (Express 5 compatible)
+app.use((_req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
