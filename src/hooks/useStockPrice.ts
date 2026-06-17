@@ -11,45 +11,33 @@ export interface LiveStockData {
   timestamp: string;
 }
 
-// 여러 CORS 프록시 (fallback 순서)
-const PROXIES = [
-  'https://api.allorigins.win/raw?url=',
-  'https://api.codetabs.com/v1/proxy?quest=',
-];
+// Render 서버의 API 사용 (CORS 제약 없음)
+const API_BASE = '/api';
 
-/** Yahoo Finance 실시간 주가 조회 (CORS 프록시 경유) */
+/** 서버 API로 실시간 주가 조회 */
 export async function fetchStockPrice(ticker: string): Promise<LiveStockData | null> {
-  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+  try {
+    const res = await fetch(`${API_BASE}/stock/${encodeURIComponent(ticker)}`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
 
-  for (const proxy of PROXIES) {
-    try {
-      const res = await fetch(`${proxy}${encodeURIComponent(target)}`, {
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!res.ok) continue;
+    const data = await res.json();
+    if (data.error || !data.currentPrice) return null;
 
-      const data = await res.json();
-      if (!data.chart?.result?.[0]) continue;
-
-      const { meta } = data.chart.result[0];
-      const price = meta.regularMarketPrice;
-      const prev = meta.previousClose || meta.chartPreviousClose;
-
-      return {
-        ticker,
-        name: meta.shortName || ticker,
-        currentPrice: price,
-        previousClose: prev,
-        change: price - prev,
-        changePercent: ((price - prev) / prev) * 100,
-        currency: meta.currency || 'KRW',
-        timestamp: new Date().toISOString(),
-      };
-    } catch {
-      continue;
-    }
+    return {
+      ticker: data.ticker,
+      name: data.name,
+      currentPrice: data.currentPrice,
+      previousClose: data.previousClose,
+      change: data.change,
+      changePercent: data.changePercent,
+      currency: data.currency || 'KRW',
+      timestamp: data.timestamp,
+    };
+  } catch {
+    return null;
   }
-  return null;
 }
 
 /** 훅: 단일 종목 실시간 주가 */

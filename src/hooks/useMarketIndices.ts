@@ -7,53 +7,32 @@ export interface MarketIndex {
   changePercent: number;
 }
 
-const PROXIES = [
-  'https://api.allorigins.win/raw?url=',
-  'https://api.codetabs.com/v1/proxy?quest=',
-];
+interface MarketIndices {
+  kospi: MarketIndex | null;
+  nasdaq: MarketIndex | null;
+  sp500: MarketIndex | null;
+}
 
-async function fetchIndex(symbol: string): Promise<MarketIndex | null> {
-  const target = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
-
-  for (const proxy of PROXIES) {
-    try {
-      const res = await fetch(`${proxy}${encodeURIComponent(target)}`, {
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!res.ok) continue;
-
-      const data = await res.json();
-      if (!data.chart?.result?.[0]) continue;
-
-      const meta = data.chart.result[0].meta;
-      const price = meta.regularMarketPrice;
-      const prev = meta.previousClose || meta.chartPreviousClose;
-
-      return {
-        name: symbol === '^KS11' ? 'KOSPI' : symbol === '^IXIC' ? 'NASDAQ' : 'S&P500',
-        price,
-        change: price - prev,
-        changePercent: ((price - prev) / prev) * 100,
-      };
-    } catch {
-      continue;
-    }
+async function fetchFromServer(): Promise<MarketIndices | null> {
+  try {
+    const res = await fetch('/api/market/indices', {
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
   }
-  return null;
 }
 
 export function useMarketIndices(intervalMs = 30000) {
-  const [indices, setIndices] = useState<{ kospi: MarketIndex | null; nasdaq: MarketIndex | null; sp500: MarketIndex | null }>({
+  const [indices, setIndices] = useState<MarketIndices>({
     kospi: null, nasdaq: null, sp500: null,
   });
 
   const fetchData = useCallback(async () => {
-    const [kospi, nasdaq, sp500] = await Promise.all([
-      fetchIndex('^KS11'),
-      fetchIndex('^IXIC'),
-      fetchIndex('^GSPC'),
-    ]);
-    setIndices({ kospi, nasdaq, sp500 });
+    const result = await fetchFromServer();
+    if (result) setIndices(result);
   }, []);
 
   useEffect(() => {
