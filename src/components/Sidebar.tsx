@@ -2,14 +2,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
-  Flame,
+  Layers,
+  TrendingUp,
+  BookOpen,
+  Lightbulb,
   Bot,
-  Search,
-  BarChart3,
-  Settings,
 } from 'lucide-react';
-import { useT } from '@/i18n';
-import { LanguageToggle } from './LanguageToggle';
 
 interface SidebarProps {
   open: boolean;
@@ -17,29 +15,38 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { path: '/', icon: LayoutDashboard, key: 'nav.dashboard' as const },
-  { path: '/themes', icon: Flame, key: 'nav.themes' as const },
-  { path: '/ai-agent', icon: Bot, key: 'nav.aiAgent' as const },
-  { path: '/stock', icon: Search, key: 'nav.stockDeepDive' as const },
-  { path: '/market', icon: BarChart3, key: 'nav.marketOverview' as const },
-  { path: '/settings', icon: Settings, key: 'nav.settings' as const },
+  { path: '/', icon: LayoutDashboard, label: '대시보드' },
+  { path: '/themes', icon: Layers, label: '테마분석' },
+  { path: '/market', icon: TrendingUp, label: '시장동향' },
+  { path: '/policy', icon: BookOpen, label: '정책예측' },
+  { path: '/ai-agent', icon: Bot, label: 'AI 에이전트' },
 ];
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useT();
 
   const handleNav = (path: string) => {
     navigate(path);
     onClose();
   };
 
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  };
+
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4 h-14 flex-shrink-0" style={{ borderBottom: '1px solid #1e293b' }}>
-        <img src="/ai-insight-logo.svg" alt="AI Insight" className="h-7" />
+      <div
+        className="flex items-center gap-2.5 px-5 h-14 flex-shrink-0"
+        style={{ borderBottom: '1px solid #1e293b' }}
+      >
+        <Lightbulb size={22} className="text-indigo-400" />
+        <span className="text-sm font-bold text-slate-100 tracking-tight">
+          AI 주도주 발굴
+        </span>
         <span className="relative flex h-2 w-2 ml-auto">
           <span
             className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
@@ -56,10 +63,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <nav className="flex-1 py-4 px-3 overflow-y-auto">
         {navItems.map((item, i) => {
           const Icon = item.icon;
-          const isActive =
-            item.path === '/'
-              ? location.pathname === '/'
-              : location.pathname.startsWith(item.path);
+          const active = isActive(item.path);
 
           return (
             <motion.button
@@ -70,11 +74,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               onClick={() => handleNav(item.path)}
               className="relative flex items-center gap-3 w-full px-3 py-2.5 rounded-lg mb-1 text-sm font-medium transition-all duration-200"
               style={{
-                color: isActive ? '#f1f5f9' : '#94a3b8',
-                backgroundColor: isActive ? 'rgba(99,102,241,0.08)' : 'transparent',
+                color: active ? '#f1f5f9' : '#94a3b8',
+                backgroundColor: active ? 'rgba(99,102,241,0.12)' : 'transparent',
               }}
             >
-              {isActive && (
+              {active && (
                 <motion.div
                   layoutId="sidebar-active"
                   className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full"
@@ -83,27 +87,24 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 />
               )}
               <Icon size={18} />
-              <span>{t(item.key)}</span>
+              <span>{item.label}</span>
             </motion.button>
           );
         })}
       </nav>
 
-      {/* Bottom: Language toggle + User */}
+      {/* Bottom */}
       <div className="flex-shrink-0 p-4" style={{ borderTop: '1px solid #1e293b' }}>
-        <div className="lg:hidden mb-3">
-          <LanguageToggle />
-        </div>
         <div className="flex items-center gap-3">
           <div
             className="flex items-center justify-center w-8 h-8 rounded-full"
             style={{ backgroundColor: '#1e293b' }}
           >
-            <span className="text-xs font-semibold text-[#6366f1]">A</span>
+            <span className="text-xs font-semibold text-indigo-400">A</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-medium text-[#f1f5f9]">AI Insight</span>
-            <span className="text-[10px] text-[#64748b]">VIP Member</span>
+            <span className="text-xs font-medium text-slate-100">AI Insight</span>
+            <span className="text-[10px] text-slate-500">VIP Member</span>
           </div>
         </div>
       </div>
@@ -114,9 +115,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     <>
       {/* Desktop sidebar */}
       <aside
-        className="hidden lg:flex fixed left-0 top-0 bottom-0 z-50 w-[260px] flex-col"
+        className="hidden lg:flex fixed left-0 top-0 bottom-0 z-50 w-[240px] flex-col"
         style={{
-          backgroundColor: '#0f172a',
+          backgroundColor: 'rgba(15,23,42,0.95)',
           borderRight: '1px solid #1e293b',
           backdropFilter: 'blur(12px)',
         }}
@@ -142,9 +143,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', damping: 25, stiffness: 250 }}
-              className="fixed left-0 top-0 bottom-0 z-[70] w-[280px] flex-col lg:hidden flex"
+              className="fixed left-0 top-0 bottom-0 z-[70] w-[260px] flex-col lg:hidden flex"
               style={{
-                backgroundColor: '#0f172a',
+                backgroundColor: 'rgba(15,23,42,0.98)',
                 borderRight: '1px solid #1e293b',
               }}
             >

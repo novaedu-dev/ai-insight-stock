@@ -1,344 +1,313 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Bot, ArrowRight } from 'lucide-react';
-import { useT } from '@/i18n';
-import { themes, useStockStore } from '@/store/stockStore';
-import { ThemeCard } from '@/components/ThemeCard';
-import { StockPriceCard } from '@/components/StockPriceCard';
+import {
+  Zap,
+  Cpu,
+  Atom,
+  HeartPulse,
+  ArrowRight,
+  ExternalLink,
+  Activity,
+  Globe,
+  BarChart3,
+} from 'lucide-react';
+import { useAllStocks } from '@/api/stockApi';
 import { useMarketIndices } from '@/hooks/useMarketIndices';
 
+/* ─── Theme config ─── */
+const THEME_CONFIG: Record<string, { icon: typeof Zap; color: string; label: string; desc: string }> = {
+  power: { icon: Zap, color: '#06b6d4', label: 'AI 인프라·전력·냉각', desc: '데이터센터, 초고압 변압기, ESS, 액침냉각' },
+  robotics: { icon: Cpu, color: '#6366f1', label: '온디바이스 AI·로봇·모빌리티', desc: '자율주행, 공장자동화, 온디바이스 AI 칩' },
+  quantum: { icon: Atom, color: '#10b981', label: '양자컴퓨팅', desc: 'IBM, IONQ, 양자암호통신 — 양자 혁명 가속화' },
+  bio: { icon: HeartPulse, color: '#f43f5e', label: '바이오·장수', desc: '비만치료제, CDMO, 바이오테크' },
+};
+
+/* ─── Korean market colors ─── */
+const UP_RED = '#f87171';
+const DOWN_BLUE = '#60a5fa';
+const CARD_BG = 'rgba(15,23,42,0.6)';
+const CARD_BORDER = 'rgba(51,65,85,0.4)';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+};
+
 export function Dashboard() {
-  const { t, lang } = useT();
   const navigate = useNavigate();
-  const { stocks: allStocks } = useStockStore();
+  const { stocks, loading, liveCount } = useAllStocks(10000);
   const marketIndices = useMarketIndices(30000);
 
-  // Get featured stocks (updated tickers)
-  const featuredStocks = allStocks.filter((s) =>
-    ['178320.KQ', '083450.KQ', '267260.KS', '208050.KQ', '005380.KS', '078340.KQ', 'IONQ', 'LLY'].includes(s.ticker)
-  );
+  const fmtPct = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
+  const fmtPrice = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-  // Market indices (실시간 데이터 우선)
-  const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  /* Group stocks by theme */
+  const themeGroups = Object.entries(THEME_CONFIG).map(([key, cfg]) => ({
+    key,
+    ...cfg,
+    stocks: stocks.filter((s) => s.theme === key),
+  }));
+
+  /* Featured stocks: first 2 from each theme = up to 8 */
+  const featuredStocks = themeGroups.flatMap((g) => g.stocks.slice(0, 2));
+
+  /* Market indices */
   const indices = [
     {
       name: 'KOSPI',
-      value: marketIndices.kospi ? fmt(marketIndices.kospi.price) : '2,847.3',
-      change: marketIndices.kospi ? `${marketIndices.kospi.change >= 0 ? '+' : ''}${marketIndices.kospi.changePercent.toFixed(1)}%` : '+0.4%',
+      value: marketIndices.kospi ? marketIndices.kospi.price.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '2,847.3',
+      change: marketIndices.kospi ? fmtPct(marketIndices.kospi.changePercent) : '+0.4%',
       isUp: marketIndices.kospi ? marketIndices.kospi.change >= 0 : true,
     },
     {
       name: 'NASDAQ',
-      value: marketIndices.nasdaq ? fmt(marketIndices.nasdaq.price) : '17,234.1',
-      change: marketIndices.nasdaq ? `${marketIndices.nasdaq.change >= 0 ? '+' : ''}${marketIndices.nasdaq.changePercent.toFixed(1)}%` : '-0.2%',
+      value: marketIndices.nasdaq ? marketIndices.nasdaq.price.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '17,234.1',
+      change: marketIndices.nasdaq ? fmtPct(marketIndices.nasdaq.changePercent) : '-0.2%',
       isUp: marketIndices.nasdaq ? marketIndices.nasdaq.change >= 0 : false,
     },
     {
       name: 'S&P500',
-      value: marketIndices.sp500 ? fmt(marketIndices.sp500.price) : '5,432.7',
-      change: marketIndices.sp500 ? `${marketIndices.sp500.change >= 0 ? '+' : ''}${marketIndices.sp500.changePercent.toFixed(1)}%` : '+0.1%',
+      value: marketIndices.sp500 ? marketIndices.sp500.price.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '5,432.7',
+      change: marketIndices.sp500 ? fmtPct(marketIndices.sp500.changePercent) : '+0.1%',
       isUp: marketIndices.sp500 ? marketIndices.sp500.change >= 0 : true,
     },
   ];
 
-  // Hero title characters for animation
-  const title1 = lang === 'KO' ? 'AI 혁명 이후' : 'AI Revolution';
-  const title2 = lang === 'KO' ? '차세대 유망주 발굴' : 'Post-AI Tenbagger Stocks';
-
-  const titleChars1 = title1.split('');
-  const titleChars2 = title2.split('');
-
   return (
-    <div>
-      {/* ====== HERO SECTION ====== */}
-      <section
-        className="relative w-full overflow-hidden"
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="px-4 lg:px-6 py-6 max-w-[1400px] mx-auto"
+    >
+      {/* ====== HERO BANNER ====== */}
+      <motion.section
+        variants={itemVariants}
+        className="relative w-full overflow-hidden rounded-2xl mb-8 p-6 lg:p-8"
         style={{
-          height: '340px',
-          backgroundImage: 'url(/hero-bg-gradients.svg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          background: 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(6,182,212,0.1) 50%, rgba(15,23,42,0.8) 100%)',
+          border: `1px solid ${CARD_BORDER}`,
         }}
       >
         {/* Decorative orbs */}
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            top: '-50px',
-            left: '-50px',
-            width: '400px',
-            height: '400px',
-            background: 'radial-gradient(circle, rgba(99,102,241,0.20), transparent 70%)',
-            borderRadius: '50%',
-          }}
-        />
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            bottom: '-80px',
-            right: '-80px',
-            width: '500px',
-            height: '500px',
-            background: 'radial-gradient(circle, rgba(6,182,212,0.15), transparent 70%)',
-            borderRadius: '50%',
-          }}
-        />
+        <div className="absolute pointer-events-none" style={{ top: '-60px', left: '-60px', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(99,102,241,0.18), transparent 70%)', borderRadius: '50%' }} />
+        <div className="absolute pointer-events-none" style={{ bottom: '-60px', right: '-40px', width: '250px', height: '250px', background: 'radial-gradient(circle, rgba(6,182,212,0.12), transparent 70%)', borderRadius: '50%' }} />
 
-        <div className="relative z-10 h-full flex flex-col justify-center px-6 lg:px-10 max-w-[1400px] mx-auto">
-          {/* Label */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="mb-4"
-          >
-            <span
-              className="text-[11px] uppercase tracking-[0.1em] font-medium px-3 py-1 rounded"
-              style={{
-                backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                color: '#06b6d4',
-                border: '1px solid rgba(6,182,212,0.2)',
-              }}
-            >
-              {t('hero.label')}
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[11px] uppercase tracking-[0.1em] font-semibold px-3 py-1 rounded-md" style={{ backgroundColor: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.25)' }}>
+              AI Revolution · 차세대 주도주
             </span>
-          </motion.div>
-
-          {/* Title Line 1 */}
-          <div className="flex flex-wrap mb-1">
-            {titleChars1.map((char, i) => (
-              <motion.span
-                key={`t1-${i}`}
-                initial={{ opacity: 0, y: 25 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.4,
-                  delay: 0.35 + i * 0.025,
-                  ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-                }}
-                className="text-[32px] lg:text-[48px] font-extrabold leading-[1.1] tracking-[-0.02em] text-[#f1f5f9]"
-              >
-                {char === ' ' ? '\u00A0' : char}
-              </motion.span>
-            ))}
+            {liveCount > 0 && (
+              <span className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 px-2.5 py-1 rounded-md" style={{ backgroundColor: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                </span>
+                LIVE {liveCount}개 종목
+              </span>
+            )}
           </div>
-
-          {/* Title Line 2 */}
-          <div className="flex flex-wrap mb-5">
-            {titleChars2.map((char, i) => (
-              <motion.span
-                key={`t2-${i}`}
-                initial={{ opacity: 0, y: 25 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.4,
-                  delay: 0.35 + titleChars1.length * 0.025 + i * 0.025,
-                  ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-                }}
-                className="text-[32px] lg:text-[48px] font-extrabold leading-[1.1] tracking-[-0.02em] text-[#f1f5f9]"
-              >
-                {char === ' ' ? '\u00A0' : char}
-              </motion.span>
-            ))}
-          </div>
-
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.9 }}
-            className="text-sm text-[#94a3b8] max-w-[540px] leading-relaxed mb-6"
-          >
-            {t('hero.subtitle')}
-          </motion.p>
-
-          {/* CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{
-              duration: 0.3,
-              delay: 1.1,
-              type: 'spring',
-              stiffness: 300,
-              damping: 20,
-            }}
-            className="flex flex-wrap gap-3"
-          >
-            <button
-              onClick={() => navigate('/themes')}
-              className="flex items-center gap-2 h-11 px-6 rounded-[10px] text-sm font-semibold text-white transition-all duration-200 hover:brightness-110 hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
-              }}
-            >
-              {t('hero.ctaPrimary')}
-              <ArrowRight size={14} />
-            </button>
-            <button
-              onClick={() => navigate('/ai-agent')}
-              className="flex items-center gap-2 h-11 px-6 rounded-[10px] text-sm font-semibold transition-all duration-200 hover:brightness-110 hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                color: '#06b6d4',
-                border: '1px solid rgba(6,182,212,0.3)',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              {t('hero.ctaSecondary')}
-            </button>
-          </motion.div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-100 mb-2 tracking-tight">
+            차세대 주도주 발굴
+          </h1>
+          <p className="text-sm text-slate-400 max-w-xl">
+            AI 혁명 이후의 4대 메가테마 — 전력·인프라, 로봇·모빌리티, 양자컴퓨팅, 바이오·장수 — 
+            Google Finance 연동 실시간 데이터로 핵심 종목을 추적합니다.
+          </p>
         </div>
-      </section>
+      </motion.section>
 
-      {/* ====== MARKET STATUS BAR ====== */}
-      <motion.section
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.3 }}
-        className="w-full h-12 flex items-center justify-between px-4 lg:px-6"
-        style={{
-          backgroundColor: '#0f172a',
-          borderBottom: '1px solid #1e293b',
-        }}
-      >
-        {/* Left: Market status */}
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span
-              className="animate-pulse-dot absolute inline-flex h-full w-full rounded-full"
-              style={{ backgroundColor: '#10b981' }}
-            />
-            <span
-              className="relative inline-flex rounded-full h-2 w-2"
-              style={{ backgroundColor: '#10b981' }}
-            />
-          </span>
-          <span className="text-xs text-[#94a3b8]">{t('market.open')}</span>
-          <span className="hidden sm:inline font-mono text-[11px] text-[#64748b] ml-2">
-            {t('market.updated')}: 14:32 KST
-          </span>
-        </div>
-
-        {/* Right: Quick stats */}
-        <div className="flex items-center gap-3 lg:gap-6">
+      {/* ====== MARKET INDICES BAR ====== */}
+      <motion.section variants={itemVariants} className="mb-8">
+        <div className="grid grid-cols-3 gap-3">
           {indices.map((idx) => (
             <div
               key={idx.name}
-              className="flex items-center gap-1.5 rounded-md px-2.5 py-1"
-              style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)' }}
+              className="rounded-xl p-4"
+              style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}`, backdropFilter: 'blur(8px)' }}
             >
-              <span className="font-mono text-[11px] text-[#64748b]">{idx.name}:</span>
-              <span className="font-mono text-[11px] font-medium text-[#f1f5f9]">{idx.value}</span>
-              <span
-                className="font-mono text-[11px] font-medium"
-                style={{ color: idx.isUp ? '#10b981' : '#f43f5e' }}
-              >
+              <div className="flex items-center gap-2 mb-2">
+                {idx.name === 'KOSPI' ? <Activity size={14} className="text-slate-400" /> : <Globe size={14} className="text-slate-400" />}
+                <span className="text-xs font-medium text-slate-400">{idx.name}</span>
+              </div>
+              <div className="text-base lg:text-lg font-bold font-mono text-slate-100">{idx.value}</div>
+              <div className="text-xs font-medium mt-0.5" style={{ color: idx.isUp ? UP_RED : DOWN_BLUE }}>
                 {idx.change}
-              </span>
+              </div>
             </div>
           ))}
         </div>
       </motion.section>
 
-      {/* ====== THEME SUMMARY CARDS ====== */}
-      <section className="px-4 lg:px-6 py-6 max-w-[1400px] mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mb-5"
-        >
-          <h2 className="text-2xl font-bold text-[#f1f5f9] mb-1">{t('themes.title')}</h2>
-          <p className="text-sm text-[#94a3b8]">{t('themes.subtitle')}</p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {themes.map((theme, i) => (
-            <ThemeCard key={theme.key} theme={theme} index={i} />
-          ))}
-        </div>
-      </section>
-
-      {/* ====== FEATURED STOCKS GRID ====== */}
-      <section className="px-4 lg:px-6 py-6 max-w-[1400px] mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="flex items-center justify-between mb-5"
-        >
-          <h2 className="text-2xl font-bold text-[#f1f5f9]">{t('stocks.title')}</h2>
+      {/* ====== THEME CARDS ====== */}
+      <motion.section variants={itemVariants} className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <BarChart3 size={18} className="text-indigo-400" />
+            4대 메가테마
+          </h2>
           <button
             onClick={() => navigate('/themes')}
-            className="flex items-center gap-1 text-xs font-medium text-[#06b6d4] hover:underline"
+            className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
           >
-            {t('stocks.viewAll')}
-            <ArrowRight size={12} />
+            전첵보기 <ArrowRight size={12} />
           </button>
-        </motion.div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {featuredStocks.map((stock, i) => (
-            <StockPriceCard key={stock.ticker} stock={stock} index={i} />
-          ))}
         </div>
-      </section>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {themeGroups.map((tg) => {
+            const Icon = tg.icon;
+            return (
+              <motion.div
+                key={tg.key}
+                variants={itemVariants}
+                whileHover={{ y: -2, transition: { duration: 0.2 } }}
+                onClick={() => navigate('/themes')}
+                className="cursor-pointer rounded-xl p-4 transition-all duration-200"
+                style={{
+                  backgroundColor: CARD_BG,
+                  border: `1px solid ${CARD_BORDER}`,
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${tg.color}18` }}>
+                    <Icon size={18} style={{ color: tg.color }} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-100">{tg.label}</div>
+                    <div className="text-[11px] text-slate-500">{tg.stocks.length}개 종목</div>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">{tg.desc}</p>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.section>
 
-      {/* ====== AI AGENT CTA ====== */}
-      <section
-        className="w-full py-12 px-4"
-        style={{
-          borderTop: '1px solid #1e293b',
-          borderBottom: '1px solid #1e293b',
-          background: 'radial-gradient(ellipse at center, rgba(99,102,241,0.04), transparent 70%)',
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.4 }}
-          className="max-w-[600px] mx-auto text-center"
-        >
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.4 }}
-            className="text-2xl font-bold text-[#f1f5f9] mb-3"
-          >
-            {t('aiCta.title')}
-          </motion.h2>
+      {/* ====== STOCK CARDS ====== */}
+      <motion.section variants={itemVariants}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <Zap size={18} className="text-amber-400" />
+            핵심 종목
+          </h2>
+          <span className="text-[11px] text-slate-500">{stocks.length}개 종목 추적 중</span>
+        </div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
-            className="text-sm text-[#94a3b8] mb-6 max-w-[480px] mx-auto"
-          >
-            {t('aiCta.subtitle')}
-          </motion.p>
+        {loading && stocks.length === 0 ? (
+          <div className="text-center py-16 text-slate-500 text-sm">데이터 로드 중...</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {(stocks.length > 0 ? stocks : featuredStocks).map((stock) => {
+              const rt = stock.realTime;
+              const price = rt?.currentPrice ?? 0;
+              const changePct = rt?.changePercent ?? 0;
+              const isUp = changePct >= 0;
+              const themeCfg = THEME_CONFIG[stock.theme] || { color: '#64748b', label: stock.theme };
 
-          <motion.button
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.3, delay: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
-            onClick={() => navigate('/ai-agent')}
-            className="inline-flex items-center gap-2 h-11 px-6 rounded-[10px] text-sm font-semibold text-white transition-all duration-200 hover:brightness-110 hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: 'linear-gradient(135deg, #6366f1, #06b6d4)',
-            }}
-          >
-            <Bot size={16} />
-            {t('aiCta.button')}
-          </motion.button>
-        </motion.div>
-      </section>
-    </div>
+              return (
+                <motion.div
+                  key={stock.ticker}
+                  variants={itemVariants}
+                  whileHover={{ y: -2, transition: { duration: 0.2 } }}
+                  className="rounded-xl p-4 transition-all duration-200"
+                  style={{
+                    backgroundColor: CARD_BG,
+                    border: `1px solid ${CARD_BORDER}`,
+                    backdropFilter: 'blur(8px)',
+                  }}
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="text-sm font-bold text-slate-100">{stock.nameKo}</div>
+                      <div className="text-[11px] text-slate-500 font-mono">{stock.ticker}</div>
+                    </div>
+                    {stock.isLive ? (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(16,185,129,0.1)' }}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        LIVE
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-600 px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(100,116,139,0.1)' }}>
+                        cached
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Price */}
+                  <div className="mb-3">
+                    {rt ? (
+                      <>
+                        <div className="text-lg font-bold font-mono text-slate-100">
+                          {stock.exchange === 'KRX' || stock.exchange === 'KOSDAQ'
+                            ? `${fmtPrice(price)}원`
+                            : `$${price.toFixed(2)}`}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span style={{ color: isUp ? UP_RED : DOWN_BLUE }} className="font-mono font-medium">
+                            {isUp ? '+' : ''}{rt.change.toFixed(2)}
+                          </span>
+                          <span
+                            className="font-mono font-medium px-1.5 py-0.5 rounded"
+                            style={{
+                              color: isUp ? UP_RED : DOWN_BLUE,
+                              backgroundColor: isUp ? 'rgba(248,113,113,0.08)' : 'rgba(96,165,250,0.08)',
+                            }}
+                          >
+                            {fmtPct(changePct)}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-sm text-slate-500">데이터 수신 중...</div>
+                    )}
+                  </div>
+
+                  {/* Theme badge */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span
+                      className="text-[10px] font-medium px-2 py-0.5 rounded-md"
+                      style={{ backgroundColor: `${themeCfg.color}15`, color: themeCfg.color }}
+                    >
+                      {themeCfg.label}
+                    </span>
+                    {stock.beginnerFriendly && (
+                      <span className="text-[10px] font-medium text-emerald-400 px-2 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(16,185,129,0.1)' }}>
+                        초보추천
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Google Finance button */}
+                  <a
+                    href={stock.googleUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg text-xs font-medium transition-all duration-200 hover:opacity-90"
+                    style={{
+                      backgroundColor: 'rgba(99,102,241,0.1)',
+                      color: '#818cf8',
+                      border: '1px solid rgba(99,102,241,0.2)',
+                    }}
+                  >
+                    <ExternalLink size={12} />
+                    Google Finance에서 보기
+                  </a>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </motion.section>
+    </motion.div>
   );
 }
