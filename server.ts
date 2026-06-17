@@ -351,24 +351,42 @@ app.post('/api/gemini', async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyA6dCjcHO7y1XlBXPCFMWjxzW1hLIKJwuU';
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
 
+  console.log(`[Gemini] Request received: ${message.substring(0, 50)}...`);
+
+  // 30초 타임아웃
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000);
+
   try {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: message }] }],
-          systemInstruction: {
-            parts: [{ text: '당신은 20년 경력의 프리미엄 주식 애널리스트입니다. 한국어로 답변하며, 진입 전략, 상승 트리거, 리스크를 구체적으로 제시합니다.' }],
-          },
+          contents: [
+            { role: 'user', parts: [{ text: '당신은 20년 경력의 프리미엄 주식 애널리스트입니다. 한국어로 답변하며, 진입 전략, 상승 트리거, 리스크를 구체적으로 제시합니다.' }] },
+            { role: 'user', parts: [{ text: message }] },
+          ],
         }),
       }
     );
+    clearTimeout(timer);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Gemini] HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+      return res.status(response.status).json({ error: `Gemini API error: ${response.status}` });
+    }
+
     const data = await response.json();
+    console.log(`[Gemini] Response received`);
     res.json(data);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    clearTimeout(timer);
+    console.error(`[Gemini] Error: ${err.name}: ${err.message}`);
+    res.status(500).json({ error: err.name === 'AbortError' ? 'Gemini API timeout (30s)' : err.message });
   }
 });
 
