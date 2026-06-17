@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" fill="none">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <!-- Neural node icon -->
+  <g transform="translate(0, 8)">
+    <circle cx="12" cy="12" r="3" fill="url(#logoGrad)"/>
+    <circle cx="6" cy="6" r="2" fill="#6366f1" opacity="0.8"/>
+    <circle cx="18" cy="6" r="2" fill="#06b6d4" opacity="0.8"/>
+    <circle cx="6" cy="18" r="2" fill="#06b6d4" opacity="0.8"/>
+    <circle cx="18" cy="18" r="2" fill="#6366f1" opacity="0.8"/>
+    <line x1="12" y1="12" x2="6" y2="6" stroke="url(#logoGrad)" stroke-width="1" opacity="0.6"/>
+    <line x1="12" y1="12" x2="18" y2="6" stroke="url(#logoGrad)" stroke-width="1" opacity="0.6"/>
+    <line x1="12" y1="12" x2="6" y2="18" stroke="url(#logoGrad)" stroke-width="1" opacity="0.6"/>
+    <line x1="12" y1="12" x2="18" y2="18" stroke="url(#logoGrad)" stroke-width="1" opacity="0.6"/>
+  </g>
+  <!-- Text "AI Insight" -->
+  <text x="32" y="27" font-family="Inter, Pretendard, sans-serif" font-size="22" font-weight="700" fill="url(#logoGrad)" letter-spacing="-0.02em">
+    AI Insight
+  </text>
+</svg>

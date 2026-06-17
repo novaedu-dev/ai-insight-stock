@@ -338,7 +338,7 @@ app.get('/api/health', (_req, res) => {
 // Gemini AI
 app.post('/api/gemini', async (req, res) => {
   const { message } = req.body;
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyA6dCjcHO7y1XlBXPCFMWjxzW1hLIKJwuU';
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY not configured' });
 
   try {
