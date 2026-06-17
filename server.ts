@@ -126,6 +126,14 @@ const THEMES = [
   { key: 'bio', name: '바이오·장수', icon: 'dna', color: '#f43f5e' },
 ];
 
+// 한글 테마명 → 영문 키 매핑
+const THEME_NAME_TO_KEY: Record<string, string> = {
+  'AI인프라·전력·냉각': 'power',
+  '온디바이스AI·로봇·모빌리티': 'robotics',
+  '양자컴퓨팅': 'quantum',
+  '바이오·장수': 'bio',
+};
+
 // ───────────────────────────────────────────────
 // 정부정책 기반 테마 예측 데이터
 // ───────────────────────────────────────────────
@@ -255,6 +263,8 @@ app.get('/api/stocks/all', (_req, res) => {
     const cached = priceCache.get(stock.ticker);
     return {
       ...stock,
+      theme: THEME_NAME_TO_KEY[stock.theme] || stock.theme, // 영문 키로 변환
+      themeName: stock.theme, // 한글 이름 보존
       realTime: cached || null,
       isLive: !!cached,
     };

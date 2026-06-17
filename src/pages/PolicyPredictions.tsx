@@ -83,11 +83,46 @@ async function askGemini(message: string): Promise<string> {
   }
 }
 
+// 페이지 로드 시 AI가 자동으로 실행할 분석 프롬프트
+const AUTO_ANALYSIS_PROMPT = `당신은 20년 경력의 프리미엄 주식 애널리스트입니다. 아래 2025-2027년 한국 정부정책을 기반으로 시장을 예측하고 주식을 추천하는 VIP 리포트를 작성해주세요.
+
+## 정부정책 개요
+- **2025 K-반도체 특화단지**: 용인 622조 투자, 반도체 특별법, 파운드리 R&D 세액공제 25%
+- **2025 AI 데이터센터 인프라**: 전력인프라 확충, 재생에너지 3020, ESS 의무설치 확대
+- **2026 K-로봇·모빌리티**: 로봇 종합발전계획, 자율주행 L4 상용화, R&D 2조 투자
+- **2026 K-퀀텀 얼라이스**: 양자 R&D 1조, 양자암호통신 상용화, 국방 양통신망
+- **2027 K-바이오 글로벌 확장**: 바이오 수출 200억달러, 비만치료제 건강보험 급여, CDMO 클러스터
+- **2027 그린에너지 전환**: 태양광 ESS 의무설치 상업용 확대, 그린뉴드얼 2.0
+
+## 분석 요청 사항
+1. 각 정책별 **수혜 종목**과 **투자 매력도** (1-5점)
+2. **단기(3개월) / 중기(1년) / 장기(2년+) 투자 전략**
+3. 각 종목별 **진입 전략** (목표가, 분할 매수 가격대)
+4. **상승 트리거** (정책 발표, 수주, 실적 등)
+5. **리스크 요인**과 **손절 기준**
+6. **초보자 추천 종목** (하방 리스크 낮은 종목)
+7. 2025년 하반기 **최우선 매수 종목 TOP 3**와 그 이유
+
+마크다운 형식으로, 표와 bullet point를 적극 활용해주세요. 모든 금액은 원화 또는 달러로 명확히 표기해주세요.`;
+
 export function PolicyPredictions() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [autoAnalyzed, setAutoAnalyzed] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // 페이지 로드 시 AI 자동 분석
+  useEffect(() => {
+    if (autoAnalyzed) return;
+    setAutoAnalyzed(true);
+    setLoading(true);
+    askGemini(AUTO_ANALYSIS_PROMPT).then(aiText => {
+      const aiMsg: ChatMessage = { role: 'ai', text: aiText, timestamp: Date.now() };
+      setMessages([aiMsg]);
+      setLoading(false);
+    });
+  }, [autoAnalyzed]);
 
   // 새 메시지 추가 시 스크롤
   useEffect(() => {
