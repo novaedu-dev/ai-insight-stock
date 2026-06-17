@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Layout } from '@/components/Layout';
 import { Dashboard } from '@/pages/Dashboard';
@@ -9,10 +9,12 @@ import { PolicyPredictions } from '@/pages/PolicyPredictions';
 import { AIAgent } from '@/pages/AIAgent';
 
 export default function App() {
+  const location = useLocation();
+
   return (
     <Layout>
       <AnimatePresence mode="wait">
-        <Routes>
+        <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/themes" element={<ThemeAnalysis />} />
           <Route path="/stock/:ticker" element={<StockDetail />} />

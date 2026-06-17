@@ -17,6 +17,8 @@ export function Navbar({ onMenuToggle, sidebarOpen }: NavbarProps) {
   const pageTitles: Record<string, string> = {
     '/': t('nav.dashboard'),
     '/themes': t('nav.themes'),
+    '/market': t('nav.marketOverview') || '시장동향',
+    '/policy': t('nav.policy') || '정부정책 테마 예측',
     '/ai-agent': t('nav.aiAgent'),
     '/stock': t('nav.stockDeepDive'),
   };
